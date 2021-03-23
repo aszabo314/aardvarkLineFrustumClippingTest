@@ -32,12 +32,16 @@ let clipLine (line : Line3d) (hull : Hull3d) =
 
         if h0 < 0.0 && h1 > 0.0 then
             // p0 inside
-            let pt = (p0 * (h1 + p.Distance) - p1 * (h0 + p.Distance)) / (h1 - h0)
+            let pt = //(p0 * (h1 + p.Distance) - p1 * (h0 + p.Distance)) / (h1 - h0)
+                let ray = Ray3d(p0, (p1-p0).Normalized)
+                ray.Intersect p
             if contains pi 0 pt then
                 p1 <- pt
         elif h1 < 0.0 && h0 > 0.0 then
             // p1 inside
-            let pt = (p0 * (h1 + p.Distance) - p1 * (h0 + p.Distance)) / (h1 - h0)
+            let pt = //(p0 * (h1 + p.Distance) - p1 * (h0 + p.Distance)) / (h1 - h0)
+                let ray = Ray3d(p0, (p1-p0).Normalized)
+                ray.Intersect p
             if contains pi 0 pt then
                 p0 <- pt
         elif h0 > 0.0 && h1 > 0.0 then
@@ -49,6 +53,13 @@ let clipLine (line : Line3d) (hull : Hull3d) =
 
     if valid then Line3d(p0, p1) |> Some
     else None
+
+let test() =
+    let line = Line3d(V3d.OOO, V3d.OOI * 8.0)
+    let box = Box3d.FromCenterAndSize (V3d.OOI * 4.0, V3d.III)
+    let hull = Hull3d.Create box
+    let clipped = clipLine line hull
+    printfn "%A" clipped //Some [[0, 0, 0], [0, 0, 8]]
 
 [<EntryPoint>]
 let main argv = 
@@ -89,10 +100,8 @@ let main argv =
         }
     let clippedLine =
         AVal.map3 (fun v (l : Line3d) p -> 
-            //let vp = CameraView.viewTrafo v * Frustum.projTrafo p
-            //let hull = ViewProjection.toHull3d vp
-            let b = Box3d.FromCenterAndSize (V3d.OOI * 4.0, V3d.III)
-            let hull = Hull3d.Create b
+            let vp = CameraView.viewTrafo v * Frustum.projTrafo p
+            let hull = ViewProjection.toHull3d vp
             clipLine l hull
         ) frustumViewTrafo line normalProj
         
